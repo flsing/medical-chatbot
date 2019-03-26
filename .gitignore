@@ -267,3 +267,6 @@ fabric.properties
 .AppleDouble
 .LSOverride
 
+garbage
+tflearn_logs
+
