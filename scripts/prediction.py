@@ -91,3 +91,28 @@ def response(sentence, userID='123', show_details=False):
                         return respond
 
             results.pop(0)
+
+print(classify("sweat,nausea"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -55,6 +55,25 @@ def greeting(sentence):
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+def backup_response(user_response):
+    robo_response=''
+    sent_tokens.append(user_response)
+
+    TfidfVec = TfidfVectorizer(tokenizer=LemNormalize, stop_words='english')
+    tfidf = TfidfVec.fit_transform(sent_tokens)
+    vals = cosine_similarity(tfidf[-1], tfidf)
+    idx=vals.argsort()[0][-2]
+    flat = vals.flatten()
+    flat.sort()
+    req_tfidf = flat[-2]
+
+    if(req_tfidf==0):
+        robo_response=robo_response+"I am sorry! I don't understand you"+doctorInfo()
+        return robo_response
+    else:
+        robo_response = robo_response+sent_tokens[idx]
+        return robo_response
+
 def patientIntake(index):
 	switch = {
 		0:["Phone Number","Hello, welcome to the MAIA clinic.  I am here to help with patient intake.  First tell me your phone number."],
@@ -257,7 +276,7 @@ def patientprocess():
 
 @app.route('/doctorprocess', methods = ['POST'])
 def doctorprocess():
-
+	bot_response=''
 	current = open('../msgHistory/currentChat.txt','r')
 	doctor_name = current.read()
 	with open('../msgHistory/doctors/'+doctor_name+'.json') as f:
@@ -292,19 +311,26 @@ def doctorprocess():
 			bot_response=doctorRegistration(DOCTORINDEX)[1]
 	elif('record for' in user_input):
 		tokens = nltk.word_tokenize(user_input)
-		patient_name = tokens[len(tokens)-2]+tokens[len(tokens)-1]
+		patient_name = tokens[3:]
 		print(patient_name)
 		bot_response = retrieveRecord(patient_name)
 
 	elif('diagnose patient' in user_input):
 		tokens = nltk.word_tokenize(user_input)
 		symptoms=tokens[4:]
-		bot_response=what_are_your_symptoms(symptoms)
+		strSympt = ''
+		for i in range(len(symptoms)):
+			strSympt = strSympt+symptoms[i]
+		print(strSympt)
+		bot_response=str(classify(strSympt))
+		print(str(response))
 
 	else:
 		classified = classify(user_input)
 		patient_response = response(user_input)
 		bot_response = convert_to_doctor(patient_response)
+		if bot_response == "We will be with the patient as soon as we can":
+			bot_response=backup_response(user_input)
 		
 
 	messages=history["messages"]
