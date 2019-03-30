@@ -8,6 +8,8 @@ from search_biopython import search, fetch_details
 from symptoms import what_are_your_symptoms
 import os
 from wikiTrain import getWikiText
+from prediction import response, classify
+
 
 trainingTexts = os.listdir('../msgHistory/')
 
@@ -52,27 +54,6 @@ def greeting(sentence):
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
-def response(user_response):
-    robo_response=''
-    sent_tokens.append(user_response)
-
-    TfidfVec = TfidfVectorizer(tokenizer=LemNormalize, stop_words='english')
-    tfidf = TfidfVec.fit_transform(sent_tokens)
-    vals = cosine_similarity(tfidf[-1], tfidf)
-    idx=vals.argsort()[0][-2]
-    flat = vals.flatten()
-    flat.sort()
-    req_tfidf = flat[-2]
-
-    if(req_tfidf==0):
-        robo_response=robo_response+"I am sorry! I don't understand you. "+doctorInfo()
-        return robo_response
-    else:
-        robo_response = robo_response+sent_tokens[idx]
-        return robo_response
-
-
 
 def patientIntake(index):
 	switch = {
@@ -125,6 +106,9 @@ def retrieveRecord(name):
 		record = 'Sorry that patient record does not exist'
 
 	return record
+
+def convert_to_doctor(response):
+	return response.replace('you', 'the patient')
 	
 
 app = Flask(__name__)
@@ -318,8 +302,10 @@ def doctorprocess():
 		bot_response=what_are_your_symptoms(symptoms)
 
 	else:
-		bot_response = response(user_input)
-		print(bot_response)
+		classified = classify(user_input)
+		patient_response = response(user_input)
+		bot_response = convert_to_doctor(patient_response)
+		
 
 	messages=history["messages"]
 	history["DOCTORINDEX"]=DOCTORINDEX

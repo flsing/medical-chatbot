@@ -11,6 +11,8 @@ import tensorflow as tf
 import random
 import json
 
+with open('../intents/intents.json') as json_data:
+    intents = json.load(json_data)
 
 data = pickle.load( open( "training_data", "rb" ) )
 words = data['words']
@@ -85,6 +87,7 @@ def response(sentence, userID='123', show_details=False):
                     if not 'context_filter' in i or                         (userID in context and 'context_filter' in i and i['context_filter'] == context[userID]):
                         if show_details: print ('tag:', i['tag'])
                         # a random response from the intent
-                        return print(random.choice(i['responses']))
+                        respond = random.choice(i['responses'])
+                        return respond
 
             results.pop(0)
