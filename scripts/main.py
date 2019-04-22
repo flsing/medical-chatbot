@@ -112,6 +112,7 @@ def doctorInfo():
 	return bot_response
 
 def retrieveRecord(name):
+	print('../msgHistory/patients/'+name+'.json')
 	try:
 		with open('../msgHistory/patients/'+name+'.json') as f:
 			print('Hello')
@@ -127,6 +128,7 @@ def retrieveRecord(name):
 	return record
 
 def convert_to_doctor(response):
+	print(response)
 	return response.replace('you', 'the patient')
 	
 
@@ -312,8 +314,9 @@ def doctorprocess():
 	elif('record for' in user_input):
 		tokens = nltk.word_tokenize(user_input)
 		patient_name = tokens[3:]
+		sep = ''
 		print(patient_name)
-		bot_response = retrieveRecord(patient_name)
+		bot_response = retrieveRecord(sep.join(patient_name))
 
 	elif('diagnose patient' in user_input):
 		tokens = nltk.word_tokenize(user_input)
@@ -325,10 +328,24 @@ def doctorprocess():
 		bot_response=str(classify(strSympt))
 		print(str(response))
 
+	elif('can you learn' in user_input):
+		try:
+			tokens=nltk.word_tokenize(user_input)
+			lookfor = tokens[4:]
+			joined = (' ').join(lookfor)
+			getWikiText(lookfor)
+			bot_response= "I learned a bit about "+joined
+		except Exception as e:
+			raise e
+
 	else:
 		classified = classify(user_input)
 		patient_response = response(user_input)
-		bot_response = convert_to_doctor(patient_response)
+		try:
+			bot_response = convert_to_doctor(patient_response)
+		except Exception as e:
+			bot_response = "Sorry, I don't understand you"
+		
 		if bot_response == "We will be with the patient as soon as we can":
 			bot_response=backup_response(user_input)
 		
@@ -351,6 +368,8 @@ def doctorprocess():
 
 if __name__=='__main__':
 	app.run(debug=True,port=5002)
+
+
 
 
 
