@@ -55,6 +55,25 @@ def greeting(sentence):
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+def backup_response(user_response):
+    robo_response=''
+    sent_tokens.append(user_response)
+
+    TfidfVec = TfidfVectorizer(tokenizer=LemNormalize, stop_words='english')
+    tfidf = TfidfVec.fit_transform(sent_tokens)
+    vals = cosine_similarity(tfidf[-1], tfidf)
+    idx=vals.argsort()[0][-2]
+    flat = vals.flatten()
+    flat.sort()
+    req_tfidf = flat[-2]
+
+    if(req_tfidf==0):
+        robo_response=robo_response+"I am sorry! I don't understand you"+doctorInfo()
+        return robo_response
+    else:
+        robo_response = robo_response+sent_tokens[idx]
+        return robo_response
+
 def patientIntake(index):
 	switch = {
 		0:["Phone Number","Hello, welcome to the MAIA clinic.  I am here to help with patient intake.  First tell me your phone number."],
@@ -93,6 +112,7 @@ def doctorInfo():
 	return bot_response
 
 def retrieveRecord(name):
+	print('../msgHistory/patients/'+name+'.json')
 	try:
 		with open('../msgHistory/patients/'+name+'.json') as f:
 			print('Hello')
@@ -108,6 +128,7 @@ def retrieveRecord(name):
 	return record
 
 def convert_to_doctor(response):
+	print(response)
 	return response.replace('you', 'the patient')
 	
 
@@ -257,7 +278,7 @@ def patientprocess():
 
 @app.route('/doctorprocess', methods = ['POST'])
 def doctorprocess():
-
+	bot_response=''
 	current = open('../msgHistory/currentChat.txt','r')
 	doctor_name = current.read()
 	with open('../msgHistory/doctors/'+doctor_name+'.json') as f:
@@ -292,19 +313,41 @@ def doctorprocess():
 			bot_response=doctorRegistration(DOCTORINDEX)[1]
 	elif('record for' in user_input):
 		tokens = nltk.word_tokenize(user_input)
-		patient_name = tokens[len(tokens)-2]+tokens[len(tokens)-1]
+		patient_name = tokens[3:]
+		sep = ''
 		print(patient_name)
-		bot_response = retrieveRecord(patient_name)
+		bot_response = retrieveRecord(sep.join(patient_name))
 
 	elif('diagnose patient' in user_input):
 		tokens = nltk.word_tokenize(user_input)
 		symptoms=tokens[4:]
-		bot_response=what_are_your_symptoms(symptoms)
+		strSympt = ''
+		for i in range(len(symptoms)):
+			strSympt = strSympt+symptoms[i]
+		print(strSympt)
+		bot_response=str(classify(strSympt))
+		print(str(response))
+
+	elif('can you learn' in user_input):
+		try:
+			tokens=nltk.word_tokenize(user_input)
+			lookfor = tokens[4:]
+			joined = (' ').join(lookfor)
+			getWikiText(lookfor)
+			bot_response= "I learned a bit about "+joined
+		except Exception as e:
+			raise e
 
 	else:
 		classified = classify(user_input)
 		patient_response = response(user_input)
-		bot_response = convert_to_doctor(patient_response)
+		try:
+			bot_response = convert_to_doctor(patient_response)
+		except Exception as e:
+			bot_response = "Sorry, I don't understand you"
+		
+		if bot_response == "We will be with the patient as soon as we can":
+			bot_response=backup_response(user_input)
 		
 
 	messages=history["messages"]
@@ -325,6 +368,8 @@ def doctorprocess():
 
 if __name__=='__main__':
 	app.run(debug=True,port=5002)
+
+
 
 
 
